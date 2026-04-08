@@ -7,54 +7,32 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Configure Gemini
+# Setup Gemini
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# The Fallback Option: If the API fails, return this instead
-DEFAULT_FALLBACK = {
-    "color_analysis": {
-        "best_colors": [{"color": "Navy Blue", "hex": "#000080", "reason": "Universal classic"}],
-        "colors_to_avoid": [],
-        "palette_summary": "We're having trouble reaching the AI Stylist, but here are some timeless classics."
-    },
+# Fallback recommendations if the API is down or key is missing
+FALLBACK_DATA = {
+    "summary": "Currently showing classic recommendations.",
     "outfits": [
-        {
-            "id": 1,
-            "name": "The Timeless Casual",
-            "vibe": "Classic",
-            "top": {"item": "White button-down shirt"},
-            "bottom": {"item": "Dark indigo jeans"},
-            "shoes": {"item": "Clean white sneakers"}
-        }
-    ],
-    "summary": "Currently showing offline recommendations."
+        {"name": "The Everyday Classic", "vibe": "Timeless", "top": {"item": "White Linen Shirt"}, "bottom": {"item": "Dark Denim Jeans"}}
+    ]
 }
 
-SYSTEM_PROMPT = "You are a professional fashion stylist. Return ONLY a JSON object. Format: { \"outfits\": [{\"name\": \"\", \"vibe\": \"\", \"top\": {\"item\": \"\"}, \"bottom\": {\"item\": \"\"}}], \"summary\": \"\" }"
+SYSTEM_PROMPT = "You are an AI Stylist. Return ONLY JSON. Format: { \"outfits\": [{\"name\": \"\", \"vibe\": \"\", \"top\": {\"item\": \"\"}, \"bottom\": {\"item\": \"\"}}], \"summary\": \"\" }"
 
 @app.route("/api/analyze", methods=["POST"])
-def analyze_fashion():
+def analyze():
     data = request.get_json()
     skin_tone = data.get('skinTone', 'Medium')
-    item_type = data.get('itemType', 'outfit')
-
-    user_prompt = f"Provide 3 {item_type} suggestions for someone with {skin_tone} skin tone."
-
+    
     try:
-        # Call Gemini API
-        response = model.generate_content(f"{SYSTEM_PROMPT}\n\nUser Request: {user_prompt}")
-        
-        # Parse JSON from response
-        clean_text = response.text.replace("```json", "").replace("```", "").strip()
-        result = json.loads(clean_text)
-        
-        return jsonify({"success": True, "data": result})
-
+        response = model.generate_content(f"{SYSTEM_PROMPT} Suggestions for {skin_tone} skin tone.")
+        # Clean potential markdown from AI response
+        clean_json = response.text.replace("```json", "").replace("```", "").strip()
+        return jsonify({"success": True, "data": json.loads(clean_json)})
     except Exception as e:
-        print(f"API Error: {e}")
-        # FALLBACK: Return the default hardcoded data if API fails
-        return jsonify({"success": False, "data": DEFAULT_FALLBACK, "note": "fallback_active"})
+        return jsonify({"success": False, "data": FALLBACK_DATA, "note": "fallback_active"})
 
 @app.route("/api/health")
 def health():
