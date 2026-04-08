@@ -1,42 +1,55 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import google.generativeai as genai
-import json
-import os
 
 app = Flask(__name__)
 CORS(app)
 
-# Setup Gemini
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
-
-# Fallback recommendations if the API is down or key is missing
-FALLBACK_DATA = {
-    "summary": "Currently showing classic recommendations.",
-    "outfits": [
-        {"name": "The Everyday Classic", "vibe": "Timeless", "top": {"item": "White Linen Shirt"}, "bottom": {"item": "Dark Denim Jeans"}}
-    ]
+# Professional Style Matrix (Logic instead of API Key)
+STYLE_DB = {
+    "fair": {
+        "summary": "Cool jewel tones and pastels provide a stunning contrast for fair skin.",
+        "outfits": [
+            {"name": "Emerald Elegance", "color": "#50C878", "top": "Emerald Silk Blouse", "bottom": "Black Tailored Trousers", "img": "emerald-fashion"},
+            {"name": "Royal Casual", "color": "#4169E1", "top": "Royal Blue Knit", "bottom": "White Linen Pants", "img": "blue-outfit"},
+            {"name": "Soft Pastel", "color": "#FFD1DC", "top": "Blush Pink Blazer", "bottom": "Light Grey Chinos", "img": "pastel-fashion"}
+        ]
+    },
+    "medium": {
+        "summary": "Earth tones and warm shades highlight the natural golden glow of medium skin.",
+        "outfits": [
+            {"name": "Terracotta Chic", "color": "#E2725B", "top": "Terracotta Wrap Top", "bottom": "Beige Wide-Leg Pants", "img": "terracotta-clothing"},
+            {"name": "Olive Utility", "color": "#808000", "top": "Olive Cargo Shirt", "bottom": "Dark Wash Denim", "img": "olive-fashion"},
+            {"name": "Golden Hour", "color": "#FFDB58", "top": "Mustard Yellow Sweater", "bottom": "Cream Skirt", "img": "yellow-outfit"}
+        ]
+    },
+    "dark": {
+        "summary": "High-saturation colors and vibrant hues pop brilliantly against deep skin tones.",
+        "outfits": [
+            {"name": "Cobalt Power", "color": "#0047AB", "top": "Cobalt Blue Suit", "bottom": "Matching Trousers", "img": "cobalt-fashion"},
+            {"name": "Citrus Burst", "color": "#FFEF00", "top": "Bright Yellow Maxi", "bottom": "Gold Accessories", "img": "vibrant-fashion"},
+            {"name": "Ruby Radiance", "color": "#E0115F", "top": "Ruby Red Silk Shirt", "bottom": "White High-Waist Jeans", "img": "red-outfit"}
+        ]
+    }
 }
-
-SYSTEM_PROMPT = "You are an AI Stylist. Return ONLY JSON. Format: { \"outfits\": [{\"name\": \"\", \"vibe\": \"\", \"top\": {\"item\": \"\"}, \"bottom\": {\"item\": \"\"}}], \"summary\": \"\" }"
 
 @app.route("/api/analyze", methods=["POST"])
 def analyze():
     data = request.get_json()
-    skin_tone = data.get('skinTone', 'Medium')
+    tone = data.get('skinTone', 'medium').lower()
+    item = data.get('itemType', 'outfit').lower()
     
-    try:
-        response = model.generate_content(f"{SYSTEM_PROMPT} Suggestions for {skin_tone} skin tone.")
-        # Clean potential markdown from AI response
-        clean_json = response.text.replace("```json", "").replace("```", "").strip()
-        return jsonify({"success": True, "data": json.loads(clean_json)})
-    except Exception as e:
-        return jsonify({"success": False, "data": FALLBACK_DATA, "note": "fallback_active"})
+    # Fetch data from matrix
+    style_data = STYLE_DB.get(tone, STYLE_DB['medium'])
+    
+    # Filter or customize based on itemType
+    final_outfits = []
+    for o in style_data['outfits']:
+        modified = o.copy()
+        if item != "outfit":
+            modified['name'] = f"Suggested {item.capitalize()}"
+        final_outfits.append(modified)
 
-@app.route("/api/health")
-def health():
-    return jsonify({"status": "ok"})
+    return jsonify({"success": True, "data": {"outfits": final_outfits, "summary": style_data['summary']}})
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
