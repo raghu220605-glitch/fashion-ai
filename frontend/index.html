@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fashion AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h1>Fashion AI</h1>
+    <p>Select your skin tone and get outfit suggestions.</p>
+
+    <label for="skinTone">Skin tone</label>
+    <select id="skinTone">
+      <option value="fair">Fair</option>
+      <option value="medium">Medium</option>
+      <option value="dark">Dark</option>
+    </select>
+
+    <label for="itemType">Item type</label>
+    <select id="itemType">
+      <option value="outfit">Outfit</option>
+      <option value="dress">Dress</option>
+      <option value="top">Top</option>
+    </select>
+
+    <button id="recommendBtn">Get Recommendations</button>
+
+    <section id="result" class="hidden">
+      <h2>Recommendations</h2>
+      <ul id="recommendations"></ul>
+    </section>
+
+    <div id="status"></div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
