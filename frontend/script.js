@@ -1,5 +1,4 @@
-// Update this line with your actual live URL
-const API_BASE = 'https://fashion-ai-jbcu.onrender.com/api';
+const API_BASE = 'https://fashion-ai-jbcu.onrender.com/api'; // Update to your live URL
 
 const recommendBtn = document.getElementById('recommendBtn');
 const recommendationsList = document.getElementById('recommendations');
@@ -9,8 +8,7 @@ recommendBtn.addEventListener('click', async () => {
     const skinTone = document.getElementById('skinTone').value;
     const itemType = document.getElementById('itemType').value;
 
-    statusDiv.textContent = 'Asking Gemini Stylist...';
-    recommendationsList.innerHTML = '';
+    statusDiv.innerHTML = '<div class="spinner"></div> Curating your style...';
 
     try {
         const res = await fetch(`${API_BASE}/analyze`, {
@@ -20,29 +18,31 @@ recommendBtn.addEventListener('click', async () => {
         });
 
         const result = await res.json();
-        
-        // Handle Fallback Notification
-        if (result.note === "fallback_active") {
-            statusDiv.innerHTML = "⚠️ <strong>Offline Mode:</strong> Using saved recommendations.";
-        } else {
-            statusDiv.textContent = result.data.summary;
-        }
+        recommendationsList.innerHTML = '';
 
         result.data.outfits.forEach(outfit => {
             const li = document.createElement('li');
+            li.className = 'outfit-card';
+            
+            // Using Unsplash Source for real-world images
+            const imageUrl = `https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80&sig=${Math.random()}`;
+
             li.innerHTML = `
-                <div style="margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-                    <strong>${outfit.name}</strong><br>
-                    👕 ${outfit.top.item}<br>
-                    👖 ${outfit.bottom.item}
+                <img src="${imageUrl}" class="outfit-img" alt="fashion">
+                <div class="card-content">
+                    <div class="swatch" style="background: ${outfit.color}"></div>
+                    <h3>${outfit.name}</h3>
+                    <p><strong>Top:</strong> ${outfit.top}</p>
+                    <p><strong>Bottom:</strong> ${outfit.bottom}</p>
                 </div>
             `;
             recommendationsList.appendChild(li);
         });
 
+        statusDiv.innerHTML = `<strong>Stylist Note:</strong> ${result.data.summary}`;
         document.getElementById('result').classList.remove('hidden');
 
     } catch (err) {
-        statusDiv.textContent = "Could not connect to server.";
+        statusDiv.textContent = "Unable to load suggestions.";
     }
 });
