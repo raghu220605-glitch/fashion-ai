@@ -1,5 +1,5 @@
 // Replace with your Render URL when you deploy
-const API_BASE = 'http://localhost:5000/api'; 
+const API_BASE = 'https://fashion-ai-jbcu.onrender.com'; 
 
 const recommendBtn = document.getElementById('recommendBtn');
 const recommendationsList = document.getElementById('recommendations');
