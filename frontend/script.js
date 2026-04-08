@@ -1,5 +1,5 @@
-// Change to your Render/Railway URL when deploying
-const API_BASE = 'http://localhost:5000/api'; 
+// Update this line with your actual live URL
+const API_BASE = 'https://fashion-ai-jbcu.onrender.com/api';
 
 const recommendBtn = document.getElementById('recommendBtn');
 const recommendationsList = document.getElementById('recommendations');
