@@ -2,39 +2,260 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fashion AI</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Outfit Recommender</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f3ff;
+      --card: #ffffff;
+      --text: #1a1035;
+      --muted: #7c6fa8;
+      --accent: #7c3aed;
+      --accent2: #a855f7;
+      --accent3: #ec4899;
+      --border: #ede9ff;
+      --shadow: 0 4px 24px rgba(124,58,237,0.10);
+      --shadow-hover: 0 20px 40px rgba(124,58,237,0.18);
+      --radius: 22px;
+      --radius-sm: 12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 40px 20px;
+    }
+
+    main { max-width: 960px; margin: 0 auto; }
+
+    /* ── Input Group ─────────────────────────────── */
+    .input-group {
+      background: var(--card);
+      padding: 28px 32px;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .input-group::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #7c3aed, #a855f7, #ec4899);
+    }
+
+    .input-group h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 18px;
+    }
+
+    .row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      color: var(--text);
+      background: #faf8ff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(168,85,247,0.12);
+    }
+
+    select {
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      color: var(--text);
+      background: #faf8ff;
+      outline: none;
+      cursor: pointer;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    button:active { transform: scale(0.98); }
+
+    /* ── Grid ────────────────────────────────────── */
+    #recommendations {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* ── Card ────────────────────────────────────── */
+    .outfit-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+    }
+
+    .outfit-card:hover {
+      transform: translateY(-10px) scale(1.01);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(168,85,247,0.35);
+    }
+
+    .outfit-img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+      background: linear-gradient(135deg, #ede9fe, #fce7f3);
+    }
+
+    .swatch {
+      width: 100%;
+      height: 10px;
+    }
+
+    .card-content { padding: 18px 20px 22px; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .badge-violet { background: #ede9fe; color: #5b21b6; }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+    .badge-pink   { background: #fce7f3; color: #9d174d; }
+
+    h3 { font-size: 1.05rem; font-weight: 700; margin: 0 0 5px; }
+
+    .desc { margin: 0 0 4px; color: var(--muted); font-size: 0.875rem; line-height: 1.5; }
+    .meta { font-size: 0.8rem; color: #a58cc9; margin: 2px 0; }
+
+    .price {
+      margin-top: 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 16px;
+    }
+  </style>
 </head>
 <body>
-  <main>
-    <h1>Fashion AI</h1>
-    <p>Select your skin tone and get outfit suggestions.</p>
+<main>
 
-    <label for="skinTone">Skin tone</label>
-    <select id="skinTone">
-      <option value="fair">Fair</option>
-      <option value="medium">Medium</option>
-      <option value="dark">Dark</option>
-    </select>
+  <div class="input-group">
+    <h2>Find your perfect outfit ✦</h2>
+    <div class="row">
+      <input type="text" placeholder="Describe your style or occasion…" />
+      <select>
+        <option>Casual</option>
+        <option>Formal</option>
+        <option>Streetwear</option>
+        <option>Boho</option>
+        <option>Party</option>
+      </select>
+    </div>
+    <button>Get recommendations</button>
+  </div>
 
-    <label for="itemType">Item type</label>
-    <select id="itemType">
-      <option value="outfit">Outfit</option>
-      <option value="dress">Dress</option>
-      <option value="top">Top</option>
-    </select>
+  <p class="section-title">Recommended for you</p>
 
-    <button id="recommendBtn">Get Recommendations</button>
+  <ul id="recommendations">
 
-    <section id="result" class="hidden">
-      <h2>Recommendations</h2>
-      <ul id="recommendations"></ul>
-    </section>
+    <li class="outfit-card">
+      <div>
+        <img class="outfit-img"
+          src="https://qendresa.com/cdn/shop/files/PHOTO-2024-10-25-12-47-02.jpg?v=1729859450"
+          alt="Violet Evening Chic" />
+        <div class="swatch" style="background: linear-gradient(90deg,#7c3aed,#a855f7,#ec4899)"></div>
+      </div>
+      <div class="card-content">
+        <span class="badge badge-violet">Trending</span>
+        <h3>Violet evening chic</h3>
+        <p class="desc">Silk midi dress with draped sleeves — effortlessly elegant</p>
+        <p class="meta">Size: XS–XL · Colour: Deep violet</p>
+        <p class="price">₹4,299</p>
+      </div>
+    </li>
 
-    <div id="status"></div>
-  </main>
+    <li class="outfit-card">
+      <div>
+        <img class="outfit-img"
+          src="https://images.urbndata.com/is/image/UrbanOutfitters/70851027_073_b?$xlarge$&fit=constrain&fmt=webp&qlt=80&wid=600"
+          alt="Urban Indigo Layer" />
+        <div class="swatch" style="background: linear-gradient(90deg,#0ea5e9,#6366f1,#8b5cf6)"></div>
+      </div>
+      <div class="card-content">
+        <span class="badge badge-blue">New in</span>
+        <h3>Urban indigo layer</h3>
+        <p class="desc">Oversized denim jacket paired with tapered cargo trousers</p>
+        <p class="meta">Size: S–XXL · Colour: Mid blue</p>
+        <p class="price">₹3,150</p>
+      </div>
+    </li>
 
-  <script src="script.js"></script>
+    <li class="outfit-card">
+      <div>
+        <img class="outfit-img"
+          src="https://palmprint.in/cdn/shop/files/DSC_4088.jpg?v=1727420430&width=720"
+          alt="Sunset Boho Set" />
+        <div class="swatch" style="background: linear-gradient(90deg,#f43f5e,#fb923c,#fbbf24)"></div>
+      </div>
+      <div class="card-content">
+        <span class="badge badge-pink">Summer pick</span>
+        <h3>Sunset boho set</h3>
+        <p class="desc">Hand block-print co-ord with wide-leg trousers &amp; fringe trim</p>
+        <p class="meta">Size: XS–XL · Colour: Terracotta print</p>
+        <p class="price">₹2,799</p>
+      </div>
+    </li>
+
+  </ul>
+</main>
 </body>
 </html>
